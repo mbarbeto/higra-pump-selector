@@ -3,8 +3,10 @@ import pandas as pd
 import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
-
-st.title("🔵 Assistente Técnico de Seleção de Bombas Higra")
+st.image("logo_higra.png", width=250)
+st.markdown("##### Powered by Bauzi Tech")
+st.markdown("---")
+st.title("Assistente Técnico de Seleção de Bombas Higra")
 
 st.markdown("Insira os dados do ponto de trabalho requerido:")
 
@@ -103,4 +105,5 @@ if st.button("🔍 Buscar Modelo Ideal"):
 
         for i in range(1, len(resultado)):
             alt = resultado.iloc[i]
+
             st.write(alt["descricao"])
