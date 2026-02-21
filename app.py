@@ -4,7 +4,7 @@ import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
 st.image("logo_higra.png", width=250)
-st.markdown("##### Powered by Bauzi Tech")
+st.markdown("##### Desenvolvido por: bauzi tech")
 st.markdown("---")
 st.title("Assistente Técnico de Seleção de Bombas Higra")
 
@@ -107,3 +107,4 @@ if st.button("🔍 Buscar Modelo Ideal"):
             alt = resultado.iloc[i]
 
             st.write(alt["descricao"])
+
