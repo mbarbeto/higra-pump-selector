@@ -40,9 +40,15 @@ def carregar_dados(caminho):
     return pd.DataFrame(dados)
 
 
+def limpar_npsh_zero(texto):
+    # Remove trecho NPSH quando for zero
+    texto = re.sub(r"-\s*NPSH requerido:\s*0\s*mca\s*", "", texto)
+    return texto
+
+
 def buscar_modelos(df, vazao_req, pressao_req):
 
-    # Nova regra: -5% abaixo até +20% acima
+    # Regra: -5% abaixo até +20% acima
     limite_inf_v = vazao_req * 0.95
     limite_sup_v = vazao_req * 1.20
 
@@ -59,7 +65,6 @@ def buscar_modelos(df, vazao_req, pressao_req):
     if candidatos.empty:
         return candidatos
 
-    # Agora usamos erro absoluto novamente (pois pode haver valor abaixo)
     candidatos["erro_percentual"] = (
         abs(candidatos["vazao"] - vazao_req) / vazao_req +
         abs(candidatos["pressao"] - pressao_req) / pressao_req
@@ -107,7 +112,9 @@ if st.button("Buscar Modelo Ideal"):
         desvio_p = (melhor["pressao"] - pressao_req) / pressao_req * 100
         erro_total = melhor["erro_percentual"] * 100
 
-        st.markdown(f"**Modelo Selecionado:**  \n{melhor['descricao']}")
+        descricao_limpa = limpar_npsh_zero(melhor["descricao"])
+
+        st.markdown(f"**Modelo Selecionado:**  \n{descricao_limpa}")
         st.markdown("---")
 
         col1, col2, col3 = st.columns(3)
@@ -121,5 +128,7 @@ if st.button("Buscar Modelo Ideal"):
 
         for i in range(1, len(resultado)):
             alt = resultado.iloc[i]
-            st.markdown(f"- {alt['descricao']}")
+            descricao_alt = limpar_npsh_zero(alt["descricao"])
+            st.markdown(f"- {descricao_alt}")
+
 
