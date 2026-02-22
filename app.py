@@ -4,7 +4,7 @@ import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
 
-# Cabeçalho institucional - Developed by: Marcio Barbeto
+# Cabeçalho institucional
 st.image("logo_higra.png", width=250)
 st.markdown("##### Desenvolvido por bauzi tech")
 st.markdown("---")
@@ -24,31 +24,32 @@ def carregar_dados(caminho):
             vazao_match = re.search(r"Vazão:\s*([\d\.]+)", linha)
             pressao_match = re.search(r"Pressão:\s*([\d\.]+)", linha)
             rendimento_match = re.search(r"Rendimento:\s*([\d\.]+)", linha)
+            potencia_match = re.search(r"Potência Demandada:\s*([\d\.]+)", linha)
 
             if vazao_match and pressao_match:
                 vazao = float(vazao_match.group(1))
                 pressao = float(pressao_match.group(1))
                 rendimento = float(rendimento_match.group(1)) if rendimento_match else 0
+                potencia = float(potencia_match.group(1)) if potencia_match else None
 
                 dados.append({
                     "descricao": linha.strip(),
                     "vazao": vazao,
                     "pressao": pressao,
-                    "rendimento": rendimento
+                    "rendimento": rendimento,
+                    "potencia": potencia
                 })
 
     return pd.DataFrame(dados)
 
 
 def limpar_npsh_zero(texto):
-    # Remove trecho NPSH quando for zero
     texto = re.sub(r"-\s*NPSH requerido:\s*0\s*mca\s*", "", texto)
     return texto
 
 
 def buscar_modelos(df, vazao_req, pressao_req):
 
-    # Regra: -5% abaixo até +20% acima
     limite_inf_v = vazao_req * 0.95
     limite_sup_v = vazao_req * 1.20
 
@@ -98,32 +99,34 @@ if st.button("Buscar Modelo Ideal"):
         origem = "Configuração em Série"
 
     if resultado.empty:
-        st.error("Nenhum modelo padrão encontrado entre -5% e +20% do ponto requerido. Consultar equipe técnica Higra.")
+        st.error("Nenhum modelo padrão encontrado entre -5% e +20% do ponto requerido.")
     else:
         st.success(f"Modelos encontrados ({origem})")
         st.markdown("**Critério aplicado:** seleção entre -5% e +20% do ponto requerido.")
         st.markdown("---")
 
+        # 🥇 Melhor aproximação (já ordenado)
         melhor = resultado.iloc[0]
 
-        st.markdown("## Sugestão Principal")
+        # ⚡ Menor potência
+        menor_potencia = resultado.dropna(subset=["potencia"]).sort_values(by="potencia").iloc[0]
 
-        desvio_v = (melhor["vazao"] - vazao_req) / vazao_req * 100
-        desvio_p = (melhor["pressao"] - pressao_req) / pressao_req * 100
-        erro_total = melhor["erro_percentual"] * 100
+        st.markdown("## 🥇 Melhor Aproximação ao Ponto de Trabalho")
 
         descricao_limpa = limpar_npsh_zero(melhor["descricao"])
-
         st.markdown(f"**Modelo Selecionado:**  \n{descricao_limpa}")
-        st.markdown("---")
-
-        col1, col2, col3 = st.columns(3)
-
-        col1.markdown(f"**Desvio Vazão**  \n{desvio_v:.2f}%")
-        col2.markdown(f"**Desvio Pressão**  \n{desvio_p:.2f}%")
-        col3.markdown(f"**Desvio Combinado Total**  \n{erro_total:.2f}%")
 
         st.markdown("---")
+
+        # Só mostra seção se for diferente
+        if menor_potencia.name != melhor.name:
+            st.markdown("## ⚡ Menor Consumo Energético")
+
+            descricao_potencia = limpar_npsh_zero(menor_potencia["descricao"])
+            st.markdown(f"**Modelo com Menor Potência Demandada:**  \n{descricao_potencia}")
+
+            st.markdown("---")
+
         st.markdown("## Outras Alternativas")
 
         for i in range(1, len(resultado)):
