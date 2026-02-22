@@ -3,9 +3,12 @@ import pandas as pd
 import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
+
+# Cabeçalho institucional
 st.image("logo_higra.png", width=250)
-st.markdown("##### Desenvolvido por: bauzi tech")
+st.markdown("##### Desenvolvido por bauzi tech")
 st.markdown("---")
+
 st.title("Assistente Técnico de Seleção de Bombas Higra")
 
 st.markdown("Insira os dados do ponto de trabalho requerido:")
@@ -38,20 +41,22 @@ def carregar_dados(caminho):
 
 
 def buscar_modelos(df, vazao_req, pressao_req):
-    tol_v = vazao_req * 0.10
-    tol_p = pressao_req * 0.10
 
+    # Regra: mínimo 0% abaixo, máximo +20% acima
     candidatos = df[
-        (abs(df["vazao"] - vazao_req) <= tol_v) &
-        (abs(df["pressao"] - pressao_req) <= tol_p)
+        (df["vazao"] >= vazao_req) &
+        (df["vazao"] <= vazao_req * 1.20) &
+        (df["pressao"] >= pressao_req) &
+        (df["pressao"] <= pressao_req * 1.20)
     ].copy()
 
     if candidatos.empty:
         return candidatos
 
+    # Cálculo do excesso percentual combinado
     candidatos["erro_percentual"] = (
-        abs(candidatos["vazao"] - vazao_req) / vazao_req +
-        abs(candidatos["pressao"] - pressao_req) / pressao_req
+        (candidatos["vazao"] - vazao_req) / vazao_req +
+        (candidatos["pressao"] - pressao_req) / pressao_req
     )
 
     candidatos = candidatos.sort_values(
@@ -68,7 +73,7 @@ df_paralelo = carregar_dados("Pontos de Operação Bombas Higra-Paralelo.txt")
 df_serie = carregar_dados("Pontos de Operação Bombas Higra-Série.txt")
 
 
-if st.button("🔍 Buscar Modelo Ideal"):
+if st.button("Buscar Modelo Ideal"):
 
     resultado = buscar_modelos(df_simples, vazao_req, pressao_req)
     origem = "Configuração Simples"
@@ -82,29 +87,32 @@ if st.button("🔍 Buscar Modelo Ideal"):
         origem = "Configuração em Série"
 
     if resultado.empty:
-        st.error("❌ Nenhum modelo padrão encontrado dentro da tolerância de ±10%. Consultar equipe técnica Higra.")
+        st.error("Nenhum modelo encontrado entre 0% e +20% acima do ponto requerido. Consultar equipe técnica Higra.")
     else:
-        st.success(f"✅ Modelos encontrados ({origem})")
-        st.markdown("Tolerância considerada: ±10% para vazão e pressão.")
+        st.success(f"Modelos encontrados ({origem})")
+        st.markdown("**Critério aplicado:** seleção entre 0% e +20% acima do ponto requerido.")
         st.markdown("---")
 
         melhor = resultado.iloc[0]
 
-        st.markdown("### 🏆 Sugestão Principal")
+        st.markdown("## Sugestão Principal")
 
-        desvio_v = abs(melhor["vazao"] - vazao_req) / vazao_req * 100
-        desvio_p = abs(melhor["pressao"] - pressao_req) / pressao_req * 100
+        desvio_v = (melhor["vazao"] - vazao_req) / vazao_req * 100
+        desvio_p = (melhor["pressao"] - pressao_req) / pressao_req * 100
+        erro_total = melhor["erro_percentual"] * 100
 
-        st.write(melhor["descricao"])
-        st.write(f"📊 Desvio Vazão: {desvio_v:.2f}%")
-        st.write(f"📊 Desvio Pressão: {desvio_p:.2f}%")
-        st.write(f"📐 Erro Combinado Total: {melhor['erro_percentual'] * 100:.2f}%")
+        st.markdown(f"**Modelo Selecionado:**  \n{melhor['descricao']}")
+        st.markdown("---")
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.markdown(f"**Excesso Vazão**  \n{desvio_v:.2f}%")
+        col2.markdown(f"**Excesso Pressão**  \n{desvio_p:.2f}%")
+        col3.markdown(f"**Excesso Combinado Total**  \n{erro_total:.2f}%")
 
         st.markdown("---")
-        st.markdown("### Outras alternativas")
+        st.markdown("## Outras Alternativas")
 
         for i in range(1, len(resultado)):
             alt = resultado.iloc[i]
-
-            st.write(alt["descricao"])
-
+            st.markdown(f"- {alt['descricao']}")
