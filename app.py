@@ -105,13 +105,13 @@ if st.button("Buscar Modelo Ideal"):
         st.markdown("**Critério aplicado:** seleção entre -5% e +20% do ponto requerido.")
         st.markdown("---")
 
-        # 🥇 Melhor aproximação (já ordenado)
+        # Melhor aproximação (já ordenado)
         melhor = resultado.iloc[0]
 
-        # ⚡ Menor potência
+        # Menor potência
         menor_potencia = resultado.dropna(subset=["potencia"]).sort_values(by="potencia").iloc[0]
 
-        st.markdown("## 🥇 Melhor Aproximação ao Ponto de Trabalho")
+        st.markdown("## Melhor Aproximação ao Ponto de Trabalho")
 
         descricao_limpa = limpar_npsh_zero(melhor["descricao"])
         st.markdown(f"**Modelo Selecionado:**  \n{descricao_limpa}")
@@ -120,7 +120,7 @@ if st.button("Buscar Modelo Ideal"):
 
         # Só mostra seção se for diferente
         if menor_potencia.name != melhor.name:
-            st.markdown("## ⚡ Menor Consumo Energético")
+            st.markdown("## Menor Consumo Energético")
 
             descricao_potencia = limpar_npsh_zero(menor_potencia["descricao"])
             st.markdown(f"**Modelo com Menor Potência Demandada:**  \n{descricao_potencia}")
@@ -133,5 +133,6 @@ if st.button("Buscar Modelo Ideal"):
             alt = resultado.iloc[i]
             descricao_alt = limpar_npsh_zero(alt["descricao"])
             st.markdown(f"- {descricao_alt}")
+
 
 
