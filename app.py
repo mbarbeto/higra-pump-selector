@@ -4,7 +4,7 @@ import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
 
-# Cabeçalho institucional
+# Cabeçalho institucional - Programado por: Marcio Barbeto
 st.image("logo_higra.png", width=250)
 st.markdown("##### Desenvolvido por bauzi tech")
 st.markdown("---")
@@ -133,6 +133,7 @@ if st.button("Buscar Modelo Ideal"):
             alt = resultado.iloc[i]
             descricao_alt = limpar_npsh_zero(alt["descricao"])
             st.markdown(f"- {descricao_alt}")
+
 
 
 
