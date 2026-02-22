@@ -4,7 +4,7 @@ import re
 
 st.set_page_config(page_title="Higra Pump Selector", layout="wide")
 
-# Cabeçalho institucional
+# Cabeçalho institucional - Developed by: Marcio Barbeto
 st.image("logo_higra.png", width=250)
 st.markdown("##### Desenvolvido por bauzi tech")
 st.markdown("---")
@@ -42,21 +42,27 @@ def carregar_dados(caminho):
 
 def buscar_modelos(df, vazao_req, pressao_req):
 
-    # Regra: mínimo 0% abaixo, máximo +20% acima
+    # Nova regra: -5% abaixo até +20% acima
+    limite_inf_v = vazao_req * 0.95
+    limite_sup_v = vazao_req * 1.20
+
+    limite_inf_p = pressao_req * 0.95
+    limite_sup_p = pressao_req * 1.20
+
     candidatos = df[
-        (df["vazao"] >= vazao_req) &
-        (df["vazao"] <= vazao_req * 1.20) &
-        (df["pressao"] >= pressao_req) &
-        (df["pressao"] <= pressao_req * 1.20)
+        (df["vazao"] >= limite_inf_v) &
+        (df["vazao"] <= limite_sup_v) &
+        (df["pressao"] >= limite_inf_p) &
+        (df["pressao"] <= limite_sup_p)
     ].copy()
 
     if candidatos.empty:
         return candidatos
 
-    # Cálculo do excesso percentual combinado
+    # Agora usamos erro absoluto novamente (pois pode haver valor abaixo)
     candidatos["erro_percentual"] = (
-        (candidatos["vazao"] - vazao_req) / vazao_req +
-        (candidatos["pressao"] - pressao_req) / pressao_req
+        abs(candidatos["vazao"] - vazao_req) / vazao_req +
+        abs(candidatos["pressao"] - pressao_req) / pressao_req
     )
 
     candidatos = candidatos.sort_values(
@@ -87,10 +93,10 @@ if st.button("Buscar Modelo Ideal"):
         origem = "Configuração em Série"
 
     if resultado.empty:
-        st.error("Nenhum modelo encontrado entre 0% e +20% acima do ponto requerido. Consultar equipe técnica Higra.")
+        st.error("Nenhum modelo padrão encontrado entre -5% e +20% do ponto requerido. Consultar equipe técnica Higra.")
     else:
         st.success(f"Modelos encontrados ({origem})")
-        st.markdown("**Critério aplicado:** seleção entre 0% e +20% acima do ponto requerido.")
+        st.markdown("**Critério aplicado:** seleção entre -5% e +20% do ponto requerido.")
         st.markdown("---")
 
         melhor = resultado.iloc[0]
@@ -106,9 +112,9 @@ if st.button("Buscar Modelo Ideal"):
 
         col1, col2, col3 = st.columns(3)
 
-        col1.markdown(f"**Excesso Vazão**  \n{desvio_v:.2f}%")
-        col2.markdown(f"**Excesso Pressão**  \n{desvio_p:.2f}%")
-        col3.markdown(f"**Excesso Combinado Total**  \n{erro_total:.2f}%")
+        col1.markdown(f"**Desvio Vazão**  \n{desvio_v:.2f}%")
+        col2.markdown(f"**Desvio Pressão**  \n{desvio_p:.2f}%")
+        col3.markdown(f"**Desvio Combinado Total**  \n{erro_total:.2f}%")
 
         st.markdown("---")
         st.markdown("## Outras Alternativas")
@@ -116,3 +122,4 @@ if st.button("Buscar Modelo Ideal"):
         for i in range(1, len(resultado)):
             alt = resultado.iloc[i]
             st.markdown(f"- {alt['descricao']}")
+
